@@ -15,14 +15,16 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: 18.0
-          fetch-depth: 1 # ⚡ 1 ne prend que le dernier commit: pas besoins de l'istorique. sinon, mettre0
+          fetch-depth: 0   # ✅ important: ramène toutes les refs de la branche 18.0
+
+      - name: Fetch 18.0 explicitly
+        run: git fetch origin 18.0:18.0   # ✅ garantit que 18.0 est dispo localement
 
       - name: Make cleanup script executable
         run: chmod +x .cleaning/clean_branch.sh
 
       - name: Switch to clean branch (from 18.0)
-        run: |
-          git checkout -B 18.0-cleaned 18.0
+        run: git checkout -B 18.0-cleaned 18.0
 
       - name: Run cleanup script
         run: bash .cleaning/clean_branch.sh
