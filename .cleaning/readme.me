@@ -1,0 +1,85 @@
+# 📚 Gestion des branches dans le projet
+
+## 🔹 Branchement de base
+
+- **`18.0`**
+  - Miroir **propre** du dépôt Odoo CE officiel (branche `18.0`).
+  - Ne pas modifier ce code.
+  - Seule cette branche doit être synchronisée avec upstream (**Sync fork → Update branch**).
+  - Sert de source au nettoyage automatique.
+
+- **`18.0-cleaned`**
+  - Branche **générée automatiquement** par GitHub Actions à partir de `18.0`.
+  - Contient le repo odoo mis à jour et nettoyé (modules supprimés, fichiers inutiles retirés).
+  - Ne JAMAIS utiliser “Sync fork” depuis cette branche.
+  - Ne pas pousser de modifications manuelles.
+
+## 🔹 Protection de `18.0-cleaned`
+
+Dans **Settings → Branches → Branch protection rules**, appliquer la règle suivante :
+
+- Pattern :  18.0-cleaned
+
+- Options :
+- ✅ Restrict who can push → **No one**
+- ✅ Require linear history
+- (Optionnel) Require pull request before merging
+
+ℹ️ Le workflow GitHub Actions (`.github/workflows/clean_branch.yml`) force-pousse quand même cette branche, car il est explicitement autorisé.
+
+## 🔹 Workflow associé
+
+- Fichier : `.github/workflows/clean_branch.yml`
+- Déclenchement :
+- À la demande (workflow_dispatch)
+- Sur mise à jour de la branche `18.0`
+- Actions :
+1. Clone la branche `18.0`
+2. Exécute le script `.cleaning/clean_framework.sh`
+3. Force-pousse le résultat vers `18.0-cleaned`
+
+## 🔹 Résumé visuel
+
+    Odoo officiel (18.0) → [Sync fork] → fork/18.0 → [workflow] → fork/18.0-cleaned
+
+- **18.0** = toujours synchronisé avec upstream  
+- **18.0-cleaned** = toujours régénéré automatiquement  
+
+# 🧹 Dossier `.cleaning/`
+
+Ce dossier contient les scripts de nettoyage utilisés pour générer la branche **`18.0-cleaned`** à partir de la branche **`18.0`**.
+
+## 🔹 Scripts
+
+### `clean_framework.sh`
+- Script shell exécuté par GitHub Actions (`.github/workflows/clean_branch.yml`).
+- Rôle :
+  - Supprimer les modules Odoo non retenus (CRM, Account, Sales, etc.).
+  - Conserver uniquement les modules techniques : `base`, `web`, `mail`, `bus`, `base_setup`.
+  - Nettoyer les fichiers inutiles :
+    - Traductions hors **EN/FR/NL**
+    - Fichiers Windows-only (`*.bat`, `*win32*`)
+    - (Optionnel) Fichiers listés dans la variable `single_files_to_delete`.
+
+## 🔹 Fonctionnement
+
+1. Le workflow `clean_branch.yml` part de la branche `18.0`.
+2. Il crée/recrée la branche `18.0-cleaned`.
+3. Il exécute `clean_framework.sh`.
+4. Il force-pousse le résultat nettoyé vers `18.0-cleaned`.
+
+## 🔹 Notes importantes
+
+- **Ne pas lancer manuellement ce script dans `18.0-cleaned`** : il est pensé pour être utilisé dans le cadre du workflow GitHub Actions.
+- Les fichiers supprimés sont définitifs dans la branche `18.0-cleaned`.  
+- La logique peut être enrichie plus tard (ex: ajustement automatique des `__manifest__.py`).
+
+## 🔹 Exemple de personnalisation
+
+Pour supprimer certains fichiers précis en plus du nettoyage par défaut, ajouter leurs chemins relatifs dans la liste `single_files_to_delete` du script :
+
+```bash
+single_files_to_delete=(
+  "odoo/addons/base/static/description/index.html"
+  "odoo/addons/web/static/description/index.html"
+)
