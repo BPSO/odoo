@@ -1,4 +1,4 @@
-name: Clean Odoo Framework
+name: Clean Odoo Rep to enlight process and hd
 
 on:
   workflow_dispatch:
@@ -16,20 +16,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure Python available
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-
       - name: Make cleanup script executable
-        run: chmod +x .cleaning/clean_branch.sh
+        run: chmod +x .cleaning/clean_framework.sh
 
       - name: Switch to clean branch (from 18.0)
         run: |
           git checkout -B 18.0-cleaned 18.0
 
       - name: Run cleanup script
-        run: bash .cleaning/clean_branch.sh
+        run: bash .cleaning/clean_framework.sh
 
       - name: Commit cleaned version
         run: |
