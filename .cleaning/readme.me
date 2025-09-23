@@ -55,11 +55,18 @@ Ce dossier contient les scripts de nettoyage utilisés pour générer la branche
 - Script shell exécuté par GitHub Actions (`.github/workflows/clean_branch.yml`).
 - Rôle :
   - Supprimer les modules Odoo non retenus (CRM, Account, Sales, etc.).
-  - Conserver uniquement les modules techniques : `base`, `web`, `mail`, `bus`, `base_setup`.
-  - Nettoyer les fichiers inutiles :
+  - Conserver uniquement les modules techniquesde base retenus dans la liste KEEP_MODULES
+    --> =("base" "web" "web_tour" "html_editor" "mail" "bus" "base_setup" "l10n_be") 
+  - Nettoyer les fichiers inutiles suivants citères :
     - Traductions hors **EN/FR/NL**
     - Fichiers Windows-only (`*.bat`, `*win32*`)
-    - (Optionnel) Fichiers listés dans la variable `single_files_to_delete`.
+   - ...
+  - Nettoyer des fichiers individules listés dans single_files_to_delete:
+      ".github/PULL_REQUEST_TEMPLATE.md"
+      ".github/ISSUE_TEMPLATE/1_bug_form.yml"
+      ".github/ISSUE_TEMPLATE/config.yml" 
+      ...
+  -  Vérifier scripts pour critères finaux et mise à jours éventuelles
 
 ## 🔹 Fonctionnement
 
