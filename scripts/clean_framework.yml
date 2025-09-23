@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+echo "🔹 Nettoyage du repo pour base_framework"
+
+# 0) Modules à conserver (techniques). Ajuste la liste si besoin.
+KEEP_MODULES=("base" "web" "mail" "bus" "base_setup")
+
+# 1) Supprimer tous les addons sauf ceux conservés
+for d in addons/*; do
+  [ -d "$d" ] || continue
+  mod="$(basename "$d")"
+  keep=false
+  for k in "${KEEP_MODULES[@]}"; do
+    if [ "$mod" = "$k" ]; then keep=true; break; fi
+  done
+  if [ "$keep" = false ]; then
+    echo "🗑️  Suppression module: $mod"
+    rm -rf "$d"
+  else
+    echo "✅ On garde: $mod"
+  fi
+done
+
+# 2) i18n → garder uniquement EN/FR/NL (et variantes)
+# (en*, fr*, nl*)
+find addons -type f -path "*/i18n/*.po" \
+  ! -name "en*.po" \
+  ! -name "fr*.po" \
+  ! -name "nl*.po" \
+  -delete
+
+# 3) tests/demo: on NE supprime PAS dans les modules conservés (utile pour CI)
+# (les modules supprimés ont déjà été effacés entièrement)
+
+# 4) Supprimer fichiers Windows-only
+find . -type f -name "*.bat" -delete
+find . -type d -iname "*win32*" -exec rm -rf {} +
+
+echo "✅ Nettoyage terminé"
