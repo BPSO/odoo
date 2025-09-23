@@ -30,8 +30,22 @@ find addons -type f -path "*/i18n/*.po" \
   ! -name "nl*.po" \
   -delete
 
-# 3) tests/demo: on NE supprime PAS dans les modules conservés (utile pour CI)
-# (les modules supprimés ont déjà été effacés entièrement)
+# 3) Suppression ciblée de fichiers individuels
+# Liste des fichiers (chemins relatifs au repo) à supprimer
+single_files_to_delete=(
+  "odoo/addons/base/static/description/index.html"
+  "odoo/addons/web/static/description/index.html"
+  # ajoute d’autres fichiers ici si nécessaire
+)
+
+for f in "${single_files_to_delete[@]}"; do
+  if [ -f "$f" ]; then
+    echo "🗑️  Suppression fichier: $f"
+    rm -f "$f"
+  else
+    echo "ℹ️  Fichier absent (ok): $f"
+  fi
+done
 
 # 4) Supprimer fichiers Windows-only
 find . -type f -name "*.bat" -delete
