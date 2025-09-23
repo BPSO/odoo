@@ -26,7 +26,7 @@ jobs:
 
       - name: Switch to clean branch (from 18.0)
         run: |
-          git checkout -B odoo_cleaned 18.0
+          git checkout -B 18.0-cleaned 18.0
 
       - name: Run cleanup script
         run: bash scripts/clean_branch.sh
@@ -37,4 +37,4 @@ jobs:
           git config user.email "actions@github.com"
           git add -A
           git commit -m "🔄 Build cleaned from 18.0" || echo "No changes to commit"
-          git push origin odoo_cleaned --force
+          git push origin 18.0-cleaned --force
