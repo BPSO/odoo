@@ -70,6 +70,20 @@ jobs:
             "odoo/addons/base/data/ir_module_module.xml"
           )
 
+
+          find_manifest() {
+            local path="$1"
+            while [ "$path" != "/" ]; do
+              if [ -f "$path/__manifest__.py" ]; then
+                echo "$path/__manifest__.py"
+                return 0
+              fi
+              path=$(dirname "$path")
+            done
+            return 1
+          }
+           
+
           for f in "${module_files_to_delete[@]}"; do
             if [ -f "$f" ]; then
               echo "🗑️  Suppression fichier de module: $f"
