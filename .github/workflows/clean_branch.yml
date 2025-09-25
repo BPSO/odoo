@@ -53,7 +53,6 @@ jobs:
             ".github/PULL_REQUEST_TEMPLATE.md"
             ".github/ISSUE_TEMPLATE/1_bug_form.yml"
             ".github/ISSUE_TEMPLATE/config.yml"
-            "odoo/addons/base/data/ir_module_module.xml"
           )
 
           for f in "${single_files_to_delete[@]}"; do
@@ -64,6 +63,42 @@ jobs:
               echo "ℹ️  Fichier absent (ok): $f"
             fi
           done
+
+          # 🔍 Suppression des fichiers liés aux modules et nettoyage des manifests
+          module_files_to_delete=(
+            "odoo/addons/base/data/ir_module_module.xml"
+          )
+
+          find_manifest() {
+            local path="$1"
+            while [ "$path" != "/" ]; do
+              if [ -f "$path/__manifest__.py" ]; then
+                echo "$path/__manifest__.py"
+                return 0
+              fi
+              path=$(dirname "$path")
+            done
+            return 1
+          }
+
+          for f in "${module_files_to_delete[@]}"; do
+            if [ -f "$f" ]; then
+              echo "🗑️  Suppression fichier de module: $f"
+
+              manifest=$(find_manifest "$(dirname "$f")")
+              if [ -n "$manifest" ]; then
+                echo "📝 Nettoyage du manifest: $manifest"
+                sed -i "\|$f|d" "$manifest"
+              else
+                echo "⚠️  Aucun manifest trouvé pour $f"
+              fi
+
+              rm -f "$f"
+            else
+              echo "ℹ️  Fichier absent (ok): $f"
+            fi
+          done	
+
 
           find . -type f -name "*.bat" -delete
           find . -type d -iname "*win32*" -exec rm -rf {} +
