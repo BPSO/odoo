@@ -82,27 +82,27 @@ jobs:
             done
             return 1
           }
-           
-
+                     
           for f in "${module_files_to_delete[@]}"; do
             if [ -f "$f" ]; then
               echo "🗑️  Suppression fichier de module: $f"
-
+          
               manifest=$(find_manifest "$(dirname "$f")")
               if [ -n "$manifest" ]; then
-                echo "📝 Manifest trouvé: $manifest"
-                echo "🔎 Ligne(s) contenant $f avant suppression:"
-                grep "$f" "$manifest" || echo "   (aucune ligne trouvée)"
-                
-                # Suppression de la ligne
-                sed -i "\|$f|d" "$manifest"
-
+                relative_path=$(basename "$(dirname "$f")")/$(basename "$f")
+                echo "📝 Nettoyage du manifest: $manifest (suppression de $relative_path)"
+          
+                echo "🔎 Ligne(s) contenant $relative_path avant suppression:"
+                grep -n "$relative_path" "$manifest" || echo "   (aucune ligne trouvée)"
+          
+                sed -i "\|$relative_path|d" "$manifest"
+          
                 echo "✅ Vérification après suppression:"
-                grep "$f" "$manifest" || echo "   (aucune occurrence restante)"
+                grep -n "$relative_path" "$manifest" || echo "   (aucune occurrence restante)"
               else
                 echo "⚠️  Aucun manifest trouvé pour $f"
               fi
-
+          
               rm -f "$f"
             else
               echo "ℹ️  Fichier absent (ok): $f"
