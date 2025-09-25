@@ -67,7 +67,7 @@ jobs:
           # 🔍 Suppression des fichiers liés aux modules et nettoyage des manifests
 
           module_files_to_delete=(
-            "odoo/addons/base/data/ir_moduke_module.xml"
+            "odoo/addons/base/data/ir_module_module.xml"
           )
 
           for f in "${module_files_to_delete[@]}"; do
@@ -94,25 +94,6 @@ jobs:
               echo "ℹ️  Fichier absent (ok): $f"
             fi
           done
-
-          for f in "${module_files_to_delete[@]}"; do
-            if [ -f "$f" ]; then
-              echo "🗑️  Suppression fichier de module: $f"
-
-              manifest=$(find_manifest "$(dirname "$f")")
-              if [ -n "$manifest" ]; then
-                echo "📝 Nettoyage du manifest: $manifest"
-                sed -i "\|$f|d" "$manifest"
-              else
-                echo "⚠️  Aucun manifest trouvé pour $f"
-              fi
-
-              rm -f "$f"
-            else
-              echo "ℹ️  Fichier absent (ok): $f"
-            fi
-          done	
-
 
           find . -type f -name "*.bat" -delete
           find . -type d -iname "*win32*" -exec rm -rf {} +
