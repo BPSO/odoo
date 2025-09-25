@@ -65,6 +65,11 @@ jobs:
           done
 
           # 🔍 Suppression des fichiers liés aux modules et nettoyage des manifests
+
+          module_files_to_delete=(
+            "odoo/addons/base/data/ir_moduke_module.xml"
+          )
+
           for f in "${module_files_to_delete[@]}"; do
             if [ -f "$f" ]; then
               echo "🗑️  Suppression fichier de module: $f"
