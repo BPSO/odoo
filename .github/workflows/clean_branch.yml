@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: "18.0"
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Switch to clean branch (from 18.0)
         run: git checkout -B 18.0-cleaned 18.0
@@ -116,7 +116,7 @@ jobs:
 
       - name: 🚑 Patch Odoo with fake iap module
         run: |
-          IAP_DIR="odoo/addons/iap"
+          IAP_DIR="odoo/odoo/addons/iap"
           mkdir -p "$IAP_DIR/tools"
 
           # Manifest minimal
