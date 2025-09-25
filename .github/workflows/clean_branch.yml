@@ -116,34 +116,47 @@ jobs:
 
       - name: 🚑 Patch Odoo with fake iap module
         run: |
-          IAP_DIR="odoo/odoo/addons/iap"
-          mkdir -p "$IAP_DIR/tools"
-
-          # Manifest minimal
-          cat > "$IAP_DIR/__manifest__.py" << 'EOF'
-          {
-              'name': 'iap (fake)',
-              'version': '1.0',
-              'summary': 'Fake IAP module to bypass dependencies',
-              'category': 'Hidden',
-              'author': 'Custom Patch',
-              'depends': ['base'],
-              'installable': True,
-              'application': False,
-          }
-          EOF
-
-          # Init vide
-          echo "" > "$IAP_DIR/__init__.py"
-
-          # Tools factices
-          cat > "$IAP_DIR/tools/iap_tools.py" << 'EOF'
-          def iap_jsonrpc(endpoint, params=None, timeout=30):
-              # Fake response for patched environment
-              return {"status": "success", "content": "Fake IAP response"}
-          EOF
-
-          echo "✅ Fake iap module created at $IAP_DIR"
+            # detect the correct addons dir (supports: addons, odoo/addons, odoo/odoo/addons)
+            BASE_ADDONS_DIR="$(
+              if [ -d addons ]; then
+                echo "addons"
+              elif [ -d odoo/addons ]; then
+                echo "odoo/addons"
+              else
+                echo "odoo/odoo/addons"
+              fi
+            )"
+            IAP_DIR="${BASE_ADDONS_DIR}/iap"
+            mkdir -p "$IAP_DIR/tools"
+  
+            # Manifest minimal
+            cat > "$IAP_DIR/__manifest__.py" << 'EOF'
+            {
+                'name': 'iap (fake)',
+                'version': '1.0',
+                'summary': 'Fake IAP module to bypass dependencies',
+                'category': 'Hidden',
+                'author': 'Custom Patch',
+                'depends': ['base'],
+                'installable': True,
+                'application': False,
+            }
+            EOF
+  
+            # Init vide
+            echo "" > "$IAP_DIR/__init__.py"
+  
+            # Tools factices (module import path: odoo.addons.iap.tools.iap_tools)
+            cat > "$IAP_DIR/tools/iap_tools.py" << 'EOF'
+            def iap_jsonrpc(endpoint, params=None, timeout=30):
+                # Fake response for patched environment
+                return {"status": "success", "content": "Fake IAP response"}
+            EOF
+            
+                      # make tools a package (optional but safe)
+                      echo "from . import iap_tools" > "$IAP_DIR/tools/__init__.py"
+            
+                      echo "✅ Fake iap module created at $IAP_DIR"
 
       - name: Commit cleaned version
         run: |
