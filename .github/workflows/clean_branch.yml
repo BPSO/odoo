@@ -53,6 +53,7 @@ jobs:
             ".github/PULL_REQUEST_TEMPLATE.md"
             ".github/ISSUE_TEMPLATE/1_bug_form.yml"
             ".github/ISSUE_TEMPLATE/config.yml"
+            "odoo/addons/base/data/ir_module_module.xml"
           )
 
           for f in "${single_files_to_delete[@]}"; do
