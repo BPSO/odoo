@@ -47,19 +47,22 @@ jobs:
             manifest="addons/$mod/__manifest__.py"
             if [ -f "$manifest" ]; then
               echo "🔎 Analyse du manifest de $mod"
-              deps=$(python3 - <<'PYCODE' "$manifest"
-import ast, sys
-from pathlib import Path
+              deps=$( MANIFEST="$manifest" python3 - <<'PYCODE'
+              import ast, os, sys
+              from pathlib import Path
+              
+              p = Path(os.environ['MANIFEST'])
+              try:
+                  data = ast.literal_eval(p.read_text(encoding='utf-8'))
+                  print(' '.join(data.get('depends', [])))
+              except Exception as e:
+                  # ne pas faire échouer le job
+                  sys.stderr.write(f"[manifest-parse] {p}: {e}\n")
+                  pass
+              PYCODE
+              )              
+              
 
-manifest = Path(sys.argv[1])
-try:
-    with manifest.open(encoding="utf-8") as f:
-        data = ast.literal_eval(f.read())
-    print(" ".join(data.get("depends", [])))
-except Exception:
-    sys.exit(0)
-PYCODE
-)
               for dep in $deps; do
                 if [[ ! " ${KEEP_MODULES[@]} " =~ " ${dep} " ]]; then
                   echo "⚠️  Dépendance manquante détectée: $dep"
