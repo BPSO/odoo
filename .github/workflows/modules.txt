@@ -1,6 +1,6 @@
-Auth*
-
-
+auth_password_policy
+auth_password_policy_portal
+auth_password_policy_sign_up
 base_import
 base_import_module
 base_automation
