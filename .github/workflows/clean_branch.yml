@@ -122,7 +122,7 @@ jobs:
 
           echo "✅ Nettoyage terminé"
 
-      - name: 🚑 Patch Odoo with fake iap module
+      - name: 🚑 Patch with fake iap module
         run: |
             BASE_ADDONS_DIR="$(
               if [ -d addons ]; then
@@ -159,6 +159,37 @@ jobs:
             echo "from . import iap_tools" > "$IAP_DIR/tools/__init__.py"
 
             echo "✅ Fake iap module created at $IAP_DIR"
+
+      - name: 🚑 Patch Odoo with fake sms module
+        run: |
+            BASE_ADDONS_DIR="$(
+              if [ -d addons ]; then
+                echo "addons"
+              elif [ -d odoo/addons ]; then
+                echo "odoo/addons"
+              else
+                echo "odoo/odoo/addons"
+              fi
+            )"
+            SMS_DIR="${BASE_ADDONS_DIR}/sms"
+            mkdir -p "$SMS_DIR/tools"
+
+            cat > "$MS_DIR/__manifest__.py" << 'EOF'
+            {
+                'name': 'sms (fake)',
+                'version': '1.0',
+                'summary': 'Fake SMS module to bypass dependencies',
+                'category': 'Hidden',
+                'author': 'Custom Patch',
+                'depends': ['base'],
+                'installable': True,
+                'application': False,
+            }
+            EOF
+
+            echo "" > "$SMS_DIR/__init__.py"
+            
+            echo "✅ Fake sms module created at $SMS_DIR"
 
       - name: Commit cleaned version
         run: |
