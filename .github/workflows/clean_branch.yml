@@ -28,7 +28,7 @@ jobs:
 
           KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
 
-          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
+          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers keep_modules_*.txt
           for f in .github/workflows/KEEP_MODULES_*.txt; do
             [ -f "$f" ] || continue
             echo "📂 Lecture du fichier $f"
