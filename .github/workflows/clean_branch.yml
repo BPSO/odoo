@@ -28,6 +28,17 @@ jobs:
 
           KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
 
+          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
+          for f in .github/workflows/KEEP_MODULES_*.txt; do
+            [ -f "$f" ] || continue
+            echo "📂 Lecture du fichier $f"
+            while IFS= read -r line || [ -n "$line" ]; do
+              # ignorer lignes vides et commentaires
+              [[ -z "$line" || "$line" =~ ^# ]] && continue
+              KEEP_MODULES+=("$line")
+            done < "$f"
+          done
+
           for d in addons/*; do
             [ -d "$d" ] || continue
             mod="$(basename "$d")"
