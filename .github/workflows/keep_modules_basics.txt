@@ -1,0 +1,12 @@
+base_import
+base_import_module
+base_automation
+base_setup
+base_sparse_fields
+board 
+spreadsheet
+spreadsheet_dashboarb
+calendar
+contacts
+ressource
+portal
