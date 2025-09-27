@@ -43,24 +43,22 @@ jobs:
           MISSING_FILE=".github/workflows/missing_required_dependencies.txt"
           : > "$MISSING_FILE"
 
-          for mod in "${KEEP_MODULES[@]}"; do
-            manifest="addons/$mod/__manifest__.py"
-            if [ -f "$manifest" ]; then
-              echo "🔎 Analyse du manifest de $mod"
-              deps=$( MANIFEST="$manifest" python3 - <<'PYCODE'
-import ast, os
-from pathlib import Path
-
-p = Path(os.environ['MANIFEST'])
+          # Créer le parser Python
+          cat > parser.py <<'EOF'
+import ast, os, pathlib, sys
+p = pathlib.Path(os.environ['MANIFEST'])
 try:
     data = ast.literal_eval(p.read_text(encoding="utf-8"))
     print(" ".join(data.get("depends", [])))
 except Exception as e:
-    import sys
     sys.stderr.write(f"[manifest-parse] {p}: {e}\n")
-    pass
-PYCODE
-)
+EOF
+
+          for mod in "${KEEP_MODULES[@]}"; do
+            manifest="addons/$mod/__manifest__.py"
+            if [ -f "$manifest" ]; then
+              echo "🔎 Analyse du manifest de $mod"
+              deps=$( MANIFEST="$manifest" python3 parser.py )
               for dep in $deps; do
                 if [[ ! " ${KEEP_MODULES[@]} " =~ " ${dep} " ]]; then
                   echo "⚠️  Dépendance manquante détectée: $dep"
@@ -71,6 +69,8 @@ PYCODE
               done
             fi
           done
+
+          rm -f parser.py
 
           echo "📄 Dépendances manquantes écrites dans $MISSING_FILE"
 
