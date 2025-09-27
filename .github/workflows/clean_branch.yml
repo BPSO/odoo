@@ -50,10 +50,10 @@ jobs:
             if [ -f "$manifest" ]; then
               echo "🔎 Analyse du manifest de $mod"
               deps=$(python3 -c "
-import ast, sys
-data = ast.literal_eval(open('$manifest').read())
-print(' '.join(data.get('depends', [])))
-" 2>/dev/null)
+                import ast, sys
+                  data = ast.literal_eval(open('$manifest').read())
+                  print(' '.join(data.get('depends', [])))
+                " 2>/dev/null)
 
               for dep in $deps; do
                 # si non déjà dans KEEP_MODULES, l'ajouter
