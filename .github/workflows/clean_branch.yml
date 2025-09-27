@@ -29,6 +29,7 @@ jobs:
           KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
 
           # ➕ Compléter la liste KEEP_MODULES à partir des fichiers keep_modules_*.txt
+          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
           for f in .github/workflows/KEEP_MODULES_*.txt; do
             [ -f "$f" ] || continue
             echo "📂 Lecture du fichier $f"
@@ -39,6 +40,34 @@ jobs:
             done < "$f"
           done
 
+          # ➕ Vérifier et compléter avec les depends des manifests
+          REQUIRED_DEPENDS=()
+          MISSING_FILE=".github/workflows/missing_required_dependencies.txt"
+          : > "$MISSING_FILE"   # vide ou crée le fichier
+
+          for mod in "${KEEP_MODULES[@]}"; do
+            manifest="addons/$mod/__manifest__.py"
+            if [ -f "$manifest" ]; then
+              echo "🔎 Analyse du manifest de $mod"
+              deps=$(python3 -c "
+import ast, sys
+data = ast.literal_eval(open('$manifest').read())
+print(' '.join(data.get('depends', [])))
+" 2>/dev/null)
+
+              for dep in $deps; do
+                # si non déjà dans KEEP_MODULES, l'ajouter
+                if [[ ! " ${KEEP_MODULES[@]} " =~ " ${dep} " ]]; then
+                  echo "⚠️  Dépendance manquante détectée: $dep"
+                  echo "$dep" >> "$MISSING_FILE"
+                  KEEP_MODULES+=("$dep")
+                  REQUIRED_DEPENDS+=("$dep")
+                fi
+              done
+            fi
+          done
+
+          echo "📄 Dépendances manquantes écrites dans $MISSING_FILE"
           for d in addons/*; do
             [ -d "$d" ] || continue
             mod="$(basename "$d")"
