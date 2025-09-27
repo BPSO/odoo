@@ -7,7 +7,7 @@ base_sparse_fields
 board
 digest
 spreadsheet
-spreadsheet_dashboarb
+spreadsheet_dashboard
 calendar
 contacts
 resource
