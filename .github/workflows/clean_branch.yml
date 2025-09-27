@@ -2,9 +2,9 @@ name: Clean Odoo Rep to enlight process and hd
 
 on:
   workflow_dispatch:
-    push:
-      branches:
-        - "18.0"
+  push:
+    branches:
+      - "18.0"
 
 jobs:
   clean:
@@ -28,13 +28,11 @@ jobs:
 
           KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
 
-          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers keep_modules_*.txt
           # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
           for f in .github/workflows/KEEP_MODULES_*.txt; do
             [ -f "$f" ] || continue
             echo "📂 Lecture du fichier $f"
             while IFS= read -r line || [ -n "$line" ]; do
-              # ignorer lignes vides et commentaires
               [[ -z "$line" || "$line" =~ ^# ]] && continue
               KEEP_MODULES+=("$line")
             done < "$f"
@@ -43,20 +41,26 @@ jobs:
           # ➕ Vérifier et compléter avec les depends des manifests
           REQUIRED_DEPENDS=()
           MISSING_FILE=".github/workflows/missing_required_dependencies.txt"
-          : > "$MISSING_FILE"   # vide ou crée le fichier
+          : > "$MISSING_FILE"
 
           for mod in "${KEEP_MODULES[@]}"; do
             manifest="addons/$mod/__manifest__.py"
             if [ -f "$manifest" ]; then
               echo "🔎 Analyse du manifest de $mod"
-              deps=$(python3 -c "
-                import ast, sys
-                  data = ast.literal_eval(open('$manifest').read())
-                  print(' '.join(data.get('depends', [])))
-                " 2>/dev/null)
+              deps=$(python3 - <<'PYCODE' "$manifest"
+import ast, sys
+from pathlib import Path
 
+manifest = Path(sys.argv[1])
+try:
+    with manifest.open(encoding="utf-8") as f:
+        data = ast.literal_eval(f.read())
+    print(" ".join(data.get("depends", [])))
+except Exception:
+    sys.exit(0)
+PYCODE
+)
               for dep in $deps; do
-                # si non déjà dans KEEP_MODULES, l'ajouter
                 if [[ ! " ${KEEP_MODULES[@]} " =~ " ${dep} " ]]; then
                   echo "⚠️  Dépendance manquante détectée: $dep"
                   echo "$dep" >> "$MISSING_FILE"
@@ -68,6 +72,7 @@ jobs:
           done
 
           echo "📄 Dépendances manquantes écrites dans $MISSING_FILE"
+
           for d in addons/*; do
             [ -d "$d" ] || continue
             mod="$(basename "$d")"
@@ -104,12 +109,9 @@ jobs:
             fi
           done
 
-          # 🔍 Suppression des fichiers liés aux modules et nettoyage des manifests
-
           module_files_to_delete=(
             "odoo/addons/base/data/ir_module_module.xml"
           )
-
 
           find_manifest() {
             local path="$1"
@@ -122,27 +124,23 @@ jobs:
             done
             return 1
           }
-                     
+
           for f in "${module_files_to_delete[@]}"; do
             if [ -f "$f" ]; then
               echo "🗑️  Suppression fichier de module: $f"
-          
+
               manifest=$(find_manifest "$(dirname "$f")")
               if [ -n "$manifest" ]; then
                 relative_path=$(basename "$(dirname "$f")")/$(basename "$f")
                 echo "📝 Nettoyage du manifest: $manifest (suppression de $relative_path)"
-          
-                echo "🔎 Ligne(s) contenant $relative_path avant suppression:"
+
                 grep -n "$relative_path" "$manifest" || echo "   (aucune ligne trouvée)"
-          
                 sed -i "\|$relative_path|d" "$manifest"
-          
-                echo "✅ Vérification après suppression:"
                 grep -n "$relative_path" "$manifest" || echo "   (aucune occurrence restante)"
               else
                 echo "⚠️  Aucun manifest trouvé pour $f"
               fi
-          
+
               rm -f "$f"
             else
               echo "ℹ️  Fichier absent (ok): $f"
@@ -156,7 +154,6 @@ jobs:
 
       - name: 🚑 Patch Odoo with fake iap module
         run: |
-            # detect the correct addons dir (supports: addons, odoo/addons, odoo/odoo/addons)
             BASE_ADDONS_DIR="$(
               if [ -d addons ]; then
                 echo "addons"
@@ -168,8 +165,7 @@ jobs:
             )"
             IAP_DIR="${BASE_ADDONS_DIR}/iap"
             mkdir -p "$IAP_DIR/tools"
-  
-            # Manifest minimal
+
             cat > "$IAP_DIR/__manifest__.py" << 'EOF'
             {
                 'name': 'iap (fake)',
@@ -182,21 +178,17 @@ jobs:
                 'application': False,
             }
             EOF
-  
-            # Init vide
+
             echo "" > "$IAP_DIR/__init__.py"
-  
-            # Tools factices (module import path: odoo.addons.iap.tools.iap_tools)
+
             cat > "$IAP_DIR/tools/iap_tools.py" << 'EOF'
             def iap_jsonrpc(endpoint, params=None, timeout=30):
-                # Fake response for patched environment
                 return {"status": "success", "content": "Fake IAP response"}
             EOF
-            
-                      # make tools a package (optional but safe)
-                      echo "from . import iap_tools" > "$IAP_DIR/tools/__init__.py"
-            
-                      echo "✅ Fake iap module created at $IAP_DIR"
+
+            echo "from . import iap_tools" > "$IAP_DIR/tools/__init__.py"
+
+            echo "✅ Fake iap module created at $IAP_DIR"
 
       - name: Commit cleaned version
         run: |
