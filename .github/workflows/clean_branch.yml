@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: "18.0"
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Switch to clean branch (from 18.0)
         run: git checkout -B 18.0-cleaned 18.0
@@ -48,21 +48,19 @@ jobs:
             if [ -f "$manifest" ]; then
               echo "🔎 Analyse du manifest de $mod"
               deps=$( MANIFEST="$manifest" python3 - <<'PYCODE'
-              import ast, os, sys
-              from pathlib import Path
-              
-              p = Path(os.environ['MANIFEST'])
-              try:
-                  data = ast.literal_eval(p.read_text(encoding='utf-8'))
-                  print(' '.join(data.get('depends', [])))
-              except Exception as e:
-                  # ne pas faire échouer le job
-                  sys.stderr.write(f"[manifest-parse] {p}: {e}\n")
-                  pass
-              PYCODE
-              )              
-              
+import ast, os
+from pathlib import Path
 
+p = Path(os.environ['MANIFEST'])
+try:
+    data = ast.literal_eval(p.read_text(encoding="utf-8"))
+    print(" ".join(data.get("depends", [])))
+except Exception as e:
+    import sys
+    sys.stderr.write(f"[manifest-parse] {p}: {e}\n")
+    pass
+PYCODE
+)
               for dep in $deps; do
                 if [[ ! " ${KEEP_MODULES[@]} " =~ " ${dep} " ]]; then
                   echo "⚠️  Dépendance manquante détectée: $dep"
