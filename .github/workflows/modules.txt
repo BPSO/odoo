@@ -1,6 +1,8 @@
 auth_password_policy
 auth_password_policy_portal
-auth_password_policy_sign_up
+auth_password_policy_signup
+aurh_signup
+barcode
 base_import
 base_import_module
 base_automation
