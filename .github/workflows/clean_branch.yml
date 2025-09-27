@@ -2,9 +2,9 @@ name: Clean Odoo Rep to enlight process and hd
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "18.0"
+#  push:
+#    branches:
+#      - "18.0"
 
 jobs:
   clean:
