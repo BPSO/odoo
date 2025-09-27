@@ -1,9 +1,10 @@
 auth_signup
+barcode
+base_automation
 base_import
 base_import_module
-base_automation
 base_setup
-base_sparse_fields
+base_sparse_field
 board
 digest
 spreadsheet
@@ -12,3 +13,4 @@ calendar
 contacts
 resource
 portal
+privacy_lookup
