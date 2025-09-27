@@ -172,6 +172,7 @@ jobs:
               fi
             )"
             SMS_DIR="${BASE_ADDONS_DIR}/sms"
+            mkdir -p "$SMS_DIR"
 
             cat > "$SMS_DIR/__manifest__.py" << 'EOF'
             {
