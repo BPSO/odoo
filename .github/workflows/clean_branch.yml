@@ -173,7 +173,7 @@ jobs:
             )"
             SMS_DIR="${BASE_ADDONS_DIR}/sms"
 
-            cat > "$MS_DIR/__manifest__.py" << 'EOF'
+            cat > "$SMS_DIR/__manifest__.py" << 'EOF'
             {
                 'name': 'sms (fake)',
                 'version': '1.0',
