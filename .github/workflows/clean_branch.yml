@@ -29,14 +29,22 @@ jobs:
           KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
 
           # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
-          for f in .github/workflows/keep_modules_*.txt; do
-            [ -f "$f" ] || continue
-            echo "📂 Lecture du fichier $f"
-            while IFS= read -r line || [ -n "$line" ]; do
-              [[ -z "$line" || "$line" =~ ^# ]] && continue
-              KEEP_MODULES+=("$line")
-            done < "$f"
-          done
+
+          shopt -s nullglob
+          files=(.github/workflows/keep_modules_*.txt)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "ℹ️  Aucun fichier keep_modules_*.txt trouvé dans .github/workflows/"
+            echo "ℹ️  Veiller à bien respecter le casse du nom de fichier keep_modules_*.txt"
+
+          else
+            for f in "${files[@]}"; do
+              echo "📂 Lecture du fichier $f"
+              while IFS= read -r line || [ -n "$line" ]; do
+                [[ -z "$line" || "$line" =~ ^# ]] && continue
+                KEEP_MODULES+=("$line")
+              done < "$f"
+            done
+          fi
 
           for d in addons/*; do
             [ -d "$d" ] || continue
