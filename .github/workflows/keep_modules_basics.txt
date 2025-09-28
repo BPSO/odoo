@@ -6,11 +6,11 @@ base_import_module
 base_setup
 base_sparse_field
 board
+calendar
+contacts
 digest
 spreadsheet
 spreadsheet_dashboard
-calendar
-contacts
 resource
 portal
 privacy_lookup
