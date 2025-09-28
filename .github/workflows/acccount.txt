@@ -16,3 +16,4 @@ account_qr_code_sepa
 account_tax_python
 account_update_tax_tags
 base_vat
+spreadsheet_dashboard_account
