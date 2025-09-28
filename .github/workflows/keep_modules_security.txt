@@ -2,3 +2,4 @@ auth_password_policy
 auth_password_policy_portal
 auth_password_policy_signup
 certificate
+auth_ldap
