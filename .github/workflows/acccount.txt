@@ -6,3 +6,8 @@ product_email_template
 product_margin
 product_matrix
 uom
+account_payment
+account_peppol
+account_edi
+account_edi_proxy_client
+account_edi_ubl_cii
