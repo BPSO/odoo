@@ -12,3 +12,6 @@ account_edi
 account_edi_proxy_client
 account_edi_ubl_cii
 account_edi_ubl_cii_tax_extension
+account_qr_code_sepa
+account_tax_python
+account_update_tax_tags
