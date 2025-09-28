@@ -3,6 +3,7 @@ barcode
 barcodes_gs1_nomenclature
 base_address_extended
 base_automation
+base_iban
 base_import
 base_import_module
 base_setup
