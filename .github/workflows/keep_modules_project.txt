@@ -1,2 +1,14 @@
 project
 rating
+project_account
+hr
+resource_mail
+hr_calendar
+hr_contract
+hr_hourly_cost
+hr_timesheet
+hr_attendance
+hr_timesheet_attendance
+hr_work_entry
+hr_work_entry_contract
+hr_work_entry
