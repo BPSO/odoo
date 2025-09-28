@@ -23,3 +23,4 @@ google_calendar
 microsoft_account
 microsoft_outlook
 microsoft_calendar
+phone_validation
