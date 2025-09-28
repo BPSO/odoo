@@ -1,5 +1,6 @@
 auth_signup
 barcode
+barcodes_gs1_nomenclature
 base_automation
 base_import
 base_import_module
