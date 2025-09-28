@@ -17,3 +17,9 @@ spreadsheet_dashboard
 resource
 portal
 privacy_lookup
+google_account
+google_gmail
+google_calendar
+microsoft_account
+microsoft_outlook
+microsoft_calendar
