@@ -2,3 +2,7 @@ account
 analytic
 onboarding
 product
+product_email_template
+product_margin
+product_matrix
+uom
