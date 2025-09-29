@@ -191,6 +191,49 @@ jobs:
             
             echo "✅ Fake sms module created at $SMS_DIR"
 
+      - name: Clean specifics - commenter payment_provider_data.xml si présent
+        run: |
+          set -e
+          echo "🔎 Recherche du manifest du module payment..."
+
+          PAYMENT_MANIFEST=""
+          for p in \
+            "addons/payment/__manifest__.py" \
+            "odoo/addons/payment/__manifest__.py" \
+            "odoo/odoo/addons/payment/__manifest__.py"; do
+            if [ -f "$p" ]; then
+              PAYMENT_MANIFEST="$p"
+              break
+            fi
+          done
+
+          if [ -z "$PAYMENT_MANIFEST" ]; then
+            echo "ℹ️  Module 'payment' non trouvé (aucun manifest détecté)."
+            exit 0
+          fi
+
+          echo "✅ Manifest trouvé : $PAYMENT_MANIFEST"
+          echo "📦 Création d'une sauvegarde : ${PAYMENT_MANIFEST}.bak"
+          cp -v "$PAYMENT_MANIFEST" "${PAYMENT_MANIFEST}.bak"
+
+          # Commenter toute ligne contenant payment_provider_data.xml (si elle n'est pas déjà commentée)
+          awk '/payment_provider_data\.xml/ {
+                  if ($0 !~ /^[[:space:]]*#/) { print "# " $0 } else { print $0 }
+                  next
+                }
+                { print }
+               ' "$PAYMENT_MANIFEST" > "${PAYMENT_MANIFEST}.tmp" && mv "${PAYMENT_MANIFEST}.tmp" "$PAYMENT_MANIFEST"
+
+          echo "📝 Vérification des modifications :"
+          if command -v git >/dev/null 2>&1; then
+            git --no-pager diff -- "${PAYMENT_MANIFEST}.bak" "$PAYMENT_MANIFEST" || true
+          else
+            echo "git non disponible dans l'environnement — sauvegarde créée : ${PAYMENT_MANIFEST}.bak"
+          fi
+
+          echo "✅ Ligne(s) contenant 'payment_provider_data.xml' commentée(s) (si présentes)."
+          
+
       - name: Commit cleaned version
         run: |
           git config user.name "github-actions"
