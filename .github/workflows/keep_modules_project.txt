@@ -21,6 +21,12 @@ project_hr_skills
 project_mail_plugin
 project_todo
 project_timesheet_holidays
+sale
 sale_management
+sale_margin
 sale_project
+sale_service
+sale_team
 sale_timesheet
+sale_timesheet_margin
+utm
