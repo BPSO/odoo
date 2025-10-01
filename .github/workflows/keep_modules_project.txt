@@ -21,4 +21,5 @@ project_hr_skills
 project_mail_plugin
 project_todo
 project_timesheet_holidays
+sale_project
 sale_timesheet
