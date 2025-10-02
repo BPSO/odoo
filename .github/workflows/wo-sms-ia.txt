@@ -1,0 +1,246 @@
+name: Clean Odoo Rep to enlight process and hd
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          ref: "18.0"
+          fetch-depth: 1
+
+      - name: Switch to clean branch (from 18.0)
+        run: git checkout -B 18.0-cleaned 18.0
+
+      - name: Run cleanup script (inline)
+        run: |
+          #!/bin/bash
+          set -e
+          echo "🔹 Nettoyage du repo pour base_framework"
+
+          KEEP_MODULES=("base" "web" "web_tour" "web_editor" "web_hierarchy" "html_editor" "http_routing" "mail" "bus" "base_setup" "l10n_be" "website")
+
+          # ➕ Compléter la liste KEEP_MODULES à partir des fichiers KEEP_MODULES_*.txt
+
+          shopt -s nullglob
+          files=(.github/workflows/keep_modules_*.txt)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "ℹ️  Aucun fichier keep_modules_*.txt trouvé dans .github/workflows/"
+            echo "ℹ️  Veiller à bien respecter le casse du nom de fichier keep_modules_*.txt"
+
+          else
+            for f in "${files[@]}"; do
+              echo "📂 Lecture du fichier $f"
+              while IFS= read -r line || [ -n "$line" ]; do
+                [[ -z "$line" || "$line" =~ ^# ]] && continue
+                KEEP_MODULES+=("$line")
+              done < "$f"
+            done
+          fi
+
+          for d in addons/*; do
+            [ -d "$d" ] || continue
+            mod="$(basename "$d")"
+            keep=false
+            for k in "${KEEP_MODULES[@]}"; do
+              if [ "$mod" = "$k" ]; then keep=true; break; fi
+            done
+            if [ "$keep" = false ]; then
+              echo "🗑️  Suppression module: $mod"
+              rm -rf "$d"
+            else
+              echo "✅ On garde: $mod"
+            fi
+          done
+
+          find addons -type f -path "*/i18n/*.po" \
+            ! -name "en*.po" \
+            ! -name "fr*.po" \
+            ! -name "nl*.po" \
+            -delete
+
+          single_files_to_delete=(
+            ".github/PULL_REQUEST_TEMPLATE.md"
+            ".github/ISSUE_TEMPLATE/1_bug_form.yml"
+            ".github/ISSUE_TEMPLATE/config.yml"
+          )
+
+          for f in "${single_files_to_delete[@]}"; do
+            if [ -f "$f" ]; then
+              echo "🗑️  Suppression fichier: $f"
+              rm -f "$f"
+            else
+              echo "ℹ️  Fichier absent (ok): $f"
+            fi
+          done
+
+          module_files_to_delete=(
+            "odoo/addons/base/data/ir_module_module.xml"
+          )
+
+          find_manifest() {
+            local path="$1"
+            while [ "$path" != "/" ]; do
+              if [ -f "$path/__manifest__.py" ]; then
+                echo "$path/__manifest__.py"
+                return 0
+              fi
+              path=$(dirname "$path")
+            done
+            return 1
+          }
+
+          for f in "${module_files_to_delete[@]}"; do
+            if [ -f "$f" ]; then
+              echo "🗑️  Suppression fichier de module: $f"
+
+              manifest=$(find_manifest "$(dirname "$f")")
+              if [ -n "$manifest" ]; then
+                relative_path=$(basename "$(dirname "$f")")/$(basename "$f")
+                echo "📝 Nettoyage du manifest: $manifest (suppression de $relative_path)"
+
+                grep -n "$relative_path" "$manifest" || echo "   (aucune ligne trouvée)"
+                sed -i "\|$relative_path|d" "$manifest"
+                grep -n "$relative_path" "$manifest" || echo "   (aucune occurrence restante)"
+              else
+                echo "⚠️  Aucun manifest trouvé pour $f"
+              fi
+
+              rm -f "$f"
+            else
+              echo "ℹ️  Fichier absent (ok): $f"
+            fi
+          done
+
+          find . -type f -name "*.bat" -delete
+          find . -type d -iname "*win32*" -exec rm -rf {} +
+
+          echo "✅ Nettoyage terminé"
+
+      - name: 🚑 Patch with fake iap module
+        run: |
+            BASE_ADDONS_DIR="$(
+              if [ -d addons ]; then
+                echo "addons"
+              elif [ -d odoo/addons ]; then
+                echo "odoo/addons"
+              else
+                echo "odoo/odoo/addons"
+              fi
+            )"
+            IAP_DIR="${BASE_ADDONS_DIR}/iap"
+            mkdir -p "$IAP_DIR/tools"
+
+            cat > "$IAP_DIR/__manifest__.py" << 'EOF'
+            {
+                'name': 'iap (fake)',
+                'version': '1.0',
+                'summary': 'Fake IAP module to bypass dependencies',
+                'category': 'Hidden',
+                'author': 'Custom Patch',
+                'depends': ['base'],
+                'installable': True,
+                'application': False,
+            }
+            EOF
+
+            echo "" > "$IAP_DIR/__init__.py"
+
+            cat > "$IAP_DIR/tools/iap_tools.py" << 'EOF'
+            def iap_jsonrpc(endpoint, params=None, timeout=30):
+                return {"status": "success", "content": "Fake IAP response"}
+            EOF
+
+            echo "from . import iap_tools" > "$IAP_DIR/tools/__init__.py"
+
+            echo "✅ Fake iap module created at $IAP_DIR"
+
+      - name: 🚑 Patch Odoo with fake sms module
+        run: |
+            BASE_ADDONS_DIR="$(
+              if [ -d addons ]; then
+                echo "addons"
+              elif [ -d odoo/addons ]; then
+                echo "odoo/addons"
+              else
+                echo "odoo/odoo/addons"
+              fi
+            )"
+            SMS_DIR="${BASE_ADDONS_DIR}/sms"
+            mkdir -p "$SMS_DIR"
+
+            cat > "$SMS_DIR/__manifest__.py" << 'EOF'
+            {
+                'name': 'sms (fake)',
+                'version': '1.0',
+                'summary': 'Fake SMS module to bypass dependencies',
+                'category': 'Hidden',
+                'author': 'Custom Patch',
+                'depends': ['base'],
+                'installable': True,
+                'application': False,
+            }
+            EOF
+
+            echo "" > "$SMS_DIR/__init__.py"
+            
+            echo "✅ Fake sms module created at $SMS_DIR"
+
+      - name: Clean specifics - commenter payment_provider_data.xml si présent
+        run: |
+          set -e
+          echo "🔎 Recherche du manifest du module payment..."
+
+          PAYMENT_MANIFEST=""
+          for p in \
+            "addons/payment/__manifest__.py" \
+            "odoo/addons/payment/__manifest__.py" \
+            "odoo/odoo/addons/payment/__manifest__.py"; do
+            if [ -f "$p" ]; then
+              PAYMENT_MANIFEST="$p"
+              break
+            fi
+          done
+
+          if [ -z "$PAYMENT_MANIFEST" ]; then
+            echo "ℹ️  Module 'payment' non trouvé (aucun manifest détecté)."
+            exit 0
+          fi
+
+          echo "✅ Manifest trouvé : $PAYMENT_MANIFEST"
+          echo "📦 Création d'une sauvegarde : ${PAYMENT_MANIFEST}.bak"
+          cp -v "$PAYMENT_MANIFEST" "${PAYMENT_MANIFEST}.bak"
+
+          # Commenter toute ligne contenant payment_provider_data.xml (si elle n'est pas déjà commentée)
+          awk '/payment_provider_data\.xml/ {
+                  if ($0 !~ /^[[:space:]]*#/) { print "# " $0 } else { print $0 }
+                  next
+                }
+                { print }
+               ' "$PAYMENT_MANIFEST" > "${PAYMENT_MANIFEST}.tmp" && mv "${PAYMENT_MANIFEST}.tmp" "$PAYMENT_MANIFEST"
+
+          echo "📝 Vérification des modifications :"
+          if command -v git >/dev/null 2>&1; then
+            git --no-pager diff -- "${PAYMENT_MANIFEST}.bak" "$PAYMENT_MANIFEST" || true
+          else
+            echo "git non disponible dans l'environnement — sauvegarde créée : ${PAYMENT_MANIFEST}.bak"
+          fi
+
+          echo "✅ Ligne(s) contenant 'payment_provider_data.xml' commentée(s) (si présentes)."
+          
+
+      - name: Commit cleaned version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "🔄 Build cleaned framework from 18.0" || echo "No changes to commit"
+          git push origin 18.0-cleaned --force
+
+      - name: List remaining addons
+        run: ls -d addons/* || true
